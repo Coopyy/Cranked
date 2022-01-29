@@ -1,0 +1,148 @@
+untyped
+global function Cranked_Init
+
+#if SERVER
+global function UpdateCranked
+#endif
+
+struct {
+	bool cranked_stim_player_when_cranked
+	bool cranked_add_weapon_mods
+	bool cranked_use_explosion_death
+	bool cranked_enabled
+
+	int cranked_time_until_death
+
+
+	table<string, int> PlayerTime = {}
+} file
+
+void function Cranked_Init() {
+
+	AddPrivateMatchModeSettingEnum("#MODE_SETTING_CATEGORY_CRANKED", "cranked_enabled", ["#SETTING_DISABLED", "#SETTING_ENABLED"], "1")
+	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_CRANKED", "cranked_time_until_death", "30" )
+	AddPrivateMatchModeSettingEnum("#MODE_SETTING_CATEGORY_CRANKED", "cranked_stim_player_when_cranked", ["#SETTING_DISABLED", "#SETTING_ENABLED"], "1")
+	AddPrivateMatchModeSettingEnum("#MODE_SETTING_CATEGORY_CRANKED", "cranked_add_weapon_mods", ["#SETTING_DISABLED", "#SETTING_ENABLED"], "1")
+	AddPrivateMatchModeSettingEnum("#MODE_SETTING_CATEGORY_CRANKED", "cranked_use_explosion_death", ["#SETTING_DISABLED", "#SETTING_ENABLED"], "1")
+
+	#if SERVER
+
+	file.cranked_enabled = GetCurrentPlaylistVarInt( "cranked_enabled", 1 ) == 1
+	file.cranked_stim_player_when_cranked = GetCurrentPlaylistVarInt( "cranked_stim_player_when_cranked", 1 ) == 1
+	file.cranked_add_weapon_mods = GetCurrentPlaylistVarInt( "cranked_add_weapon_mods", 1 ) == 1
+	file.cranked_use_explosion_death = GetCurrentPlaylistVarInt( "cranked_use_explosion_death", 1 ) == 1
+	file.cranked_time_until_death = GetCurrentPlaylistVarInt( "cranked_time_until_death", 30 )
+
+	AddCallback_GameStateEnter(eGameState.Playing, StartCrankedThink)
+	AddCallback_OnPlayerKilled(OnPlayerKilled);
+	AddCallback_OnClientDisconnected(OnPlayerDisconnected)
+
+	#endif
+}
+
+#if SERVER
+
+void function OnPlayerDisconnected(entity player)
+{
+	if (!file.cranked_enabled)
+		return
+	RemoveCranked(player)
+	
+}
+void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
+{
+	if (!file.cranked_enabled)
+		return
+	if ( !victim.IsPlayer() || !attacker.IsPlayer() || GetGameState() != eGameState.Playing )
+		return
+
+	if (attacker != victim)
+		UpdateCranked(attacker)
+
+	RemoveCranked(victim)
+}
+
+void function StartCrankedThink() {
+	if (!file.cranked_enabled)
+		return
+	thread CrankedThink()
+}
+
+void function CrankedThink() {
+	while (true) 
+	{
+		foreach (entity player in GetPlayerArray())
+		{
+			if (CrankedContains(player))
+			{
+				SendHudMessage( player, file.PlayerTime[(player.GetPlayerName())] + " Seconds Remaining", -1, 0.2, 255, 200, 200, 255, 0.15, 1, 1 )
+
+				print(file.PlayerTime[(player.GetPlayerName())])
+				if (file.PlayerTime[(player.GetPlayerName())] == 0) {
+					if (file.cranked_use_explosion_death) 
+					{
+						vector origin = player.GetWorldSpaceCenter() + player.GetForwardVector() * 16.0
+						int damageFlags = DF_RAGDOLL | DF_EXPLOSION
+
+						foreach (entity weapon in player.GetMainWeapons()) //ghetto explosion fix
+							player.TakeWeaponNow(weapon.GetWeaponClassName())
+						player.GiveWeapon("mp_weapon_rocket_launcher")
+
+						entity w = player.GetActiveWeapon()
+						entity g = w.FireWeaponGrenade( origin, <0,0,1>, Vector( RandomFloatRange( -1200, 1200 ), 100, 0 ), 0.01, damageFlags, damageFlags, false, true, true )
+						Grenade_Init(g, w)
+						g.GrenadeExplode( <20,20,20> )
+					}
+						
+					player.Die()
+					RemoveCranked(player)
+				} 
+				else 
+					file.PlayerTime[(player.GetPlayerName())] = (int(float(file.PlayerTime[(player.GetPlayerName())])) - 1)
+			}
+		}
+
+		wait 1
+	}
+}
+
+void function UpdateCranked(entity player) {
+	if (!CrankedContains(player))
+	{
+		if (file.cranked_stim_player_when_cranked)
+			StimPlayer(player, 9999.9)
+		if (file.cranked_add_weapon_mods) 
+		{
+			foreach (entity weapon in player.GetMainWeapons())
+			{
+				array<string> mods = weapon.GetMods()
+				array<string> modstoadd = ["pas_fast_reload", "pas_fast_ads", "pas_fast_swap"]
+				foreach (string mod in modstoadd) {
+					if (!mods.contains(mod))
+						mods.append(mod)
+				}
+				player.TakeWeaponNow(weapon.GetWeaponClassName())
+				player.GiveWeapon(weapon.GetWeaponClassName(), mods)
+			}
+		}
+		file.PlayerTime[(player.GetPlayerName())] <- 0
+	} 
+	file.PlayerTime[(player.GetPlayerName())] = file.cranked_time_until_death
+	print(file.PlayerTime[(player.GetPlayerName())])
+}
+
+void function RemoveCranked(entity player) {
+	if (CrankedContains(player))
+		delete file.PlayerTime[(player.GetPlayerName())] // the fuck is this syntax respawn
+}
+
+bool function CrankedContains(entity player)
+{
+	foreach (key, value in file.PlayerTime) {
+		if (player.GetPlayerName() == key)
+			return true
+	}
+	return false
+}
+	
+#endif

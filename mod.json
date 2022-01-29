@@ -1,0 +1,23 @@
+{
+	"Name" : "Coopyy.Cranked",
+	"Description" : "Cranked riff/option for da vider game",
+	"Version": "1",
+	"LoadPriority": 1,
+
+	"Scripts": [
+		{
+			"Path": "sh_cranked.gnut",
+			"RunOn": "MP",
+			"ClientCallback": {
+				"After": "Cranked_Init"
+			},
+			"ServerCallback": {
+				"After": "Cranked_Init"
+			}
+		}
+	],
+
+	"Localisation": [
+		"resource/cranked_localisation_%language%.txt"
+	]
+}
