@@ -73,7 +73,7 @@ void function CrankedThink() {
 	{
 		foreach (entity player in GetPlayerArray())
 		{
-			if (CrankedContains(player))
+			if (CrankedContains(player) && IsValid(player))
 			{
 				SendHudMessage( player, file.PlayerTime[(player.GetPlayerName())] + " Seconds Remaining", -1, 0.2, 255, 200, 200, 255, 0.15, 1, 1 )
 
@@ -107,6 +107,8 @@ void function CrankedThink() {
 }
 
 void function UpdateCranked(entity player) {
+        if (!IsValid(player))
+return
 	if (!CrankedContains(player))
 	{
 		if (file.cranked_stim_player_when_cranked)
