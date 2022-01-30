@@ -1,7 +1,7 @@
 {
 	"Name" : "Coopyy.Cranked",
 	"Description" : "Cranked riff/option for da vider game",
-	"Version": "1",
+	"Version": "1.0.0",
 	"LoadPriority": 1,
 
 	"Scripts": [
