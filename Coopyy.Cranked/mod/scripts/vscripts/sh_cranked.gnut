@@ -94,7 +94,7 @@ foreach ( entity weapon in player.GetOffhandWeapons() )
 						Grenade_Init(g, w)
 						g.GrenadeExplode( <20,20,20> )
 					}
-						
+					if (IsAlive(player))
 					player.Die()
 					RemoveCranked(player)
 				} 
