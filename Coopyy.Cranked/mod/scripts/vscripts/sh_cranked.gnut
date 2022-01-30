@@ -84,8 +84,8 @@ void function CrankedThink() {
 					{
 						if (file.cranked_use_explosion_death) 
 							DoExplode(player)
-
-						if (player.IsTitan()) 
+						
+						if (player.IsTitan() || !file.cranked_use_explosion_death)
 							player.Die()
 					}
 					
