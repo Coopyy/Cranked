@@ -83,7 +83,8 @@ void function CrankedThink() {
 					{
 						vector origin = player.GetWorldSpaceCenter() + player.GetForwardVector() * 16.0
 						int damageFlags = DF_RAGDOLL | DF_EXPLOSION
-
+foreach ( entity weapon in player.GetOffhandWeapons() )
+			player.TakeWeaponNow( weapon.GetWeaponClassName() )
 						foreach (entity weapon in player.GetMainWeapons()) //ghetto explosion fix
 							player.TakeWeaponNow(weapon.GetWeaponClassName())
 						player.GiveWeapon("mp_weapon_rocket_launcher")
