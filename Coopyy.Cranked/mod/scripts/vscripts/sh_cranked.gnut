@@ -1,11 +1,6 @@
 untyped
 global function Cranked_Init
 
-#if SERVER
-global function UpdateCranked
-global function DoExplode
-#endif
-
 struct {
 	bool cranked_stim_player_when_cranked
 	bool cranked_add_weapon_mods
@@ -37,10 +32,12 @@ void function Cranked_Init() {
 	file.cranked_time_until_death = GetCurrentPlaylistVarInt( "cranked_time_until_death", 30 )
 	file.cranked_added_kill_score = GetCurrentPlaylistVarInt( "cranked_added_kill_score", 30 )
 
-	AddCallback_GameStateEnter(eGameState.Playing, StartCrankedThink)
-	AddCallback_OnPlayerKilled(OnPlayerKilled);
-	AddCallback_OnClientDisconnected(OnPlayerDisconnected)
-
+	if (file.cranked_enabled)
+	{
+		AddCallback_GameStateEnter(eGameState.Playing, StartCrankedThink)
+		AddCallback_OnPlayerKilled(OnPlayerKilled);
+		AddCallback_OnClientDisconnected(OnPlayerDisconnected)
+	}
 	#endif
 }
 
@@ -48,15 +45,11 @@ void function Cranked_Init() {
 
 void function OnPlayerDisconnected(entity player)
 {
-	if (!file.cranked_enabled)
-		return
 	RemoveCranked(player)
 	
 }
 void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 {
-	if (!file.cranked_enabled)
-		return
 	if ( !victim.IsPlayer() || !attacker.IsPlayer() || GetGameState() != eGameState.Playing )
 		return
 
@@ -72,8 +65,6 @@ void function OnPlayerKilled( entity victim, entity attacker, var damageInfo )
 }
 
 void function StartCrankedThink() {
-	if (!file.cranked_enabled)
-		return
 	thread CrankedThink()
 }
 
