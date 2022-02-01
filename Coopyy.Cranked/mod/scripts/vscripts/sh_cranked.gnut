@@ -1,6 +1,10 @@
 untyped
 global function Cranked_Init
 
+#if SERVER
+global function UpdateCranked
+#endif
+
 struct {
 	bool cranked_stim_player_when_cranked
 	bool cranked_add_weapon_mods
@@ -17,7 +21,7 @@ struct {
 
 void function Cranked_Init() {
 
-	AddPrivateMatchModeSettingEnum("#MODE_SETTING_CATEGORY_CRANKED", "cranked_enabled", ["#SETTING_DISABLED", "#SETTING_ENABLED"], "1")
+	AddPrivateMatchModeSettingEnum("#MODE_SETTING_CATEGORY_CRANKED", "cranked_enabled", ["#SETTING_DISABLED", "#SETTING_ENABLED"], "0")
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_CRANKED", "cranked_time_until_death", "30" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_CRANKED", "cranked_added_kill_score", "0" )
 	AddPrivateMatchModeSettingArbitrary( "#MODE_SETTING_CATEGORY_CRANKED", "cranked_timer_death_penality", "0" )
@@ -27,7 +31,7 @@ void function Cranked_Init() {
 
 	#if SERVER
 
-	file.cranked_enabled = GetCurrentPlaylistVarInt( "cranked_enabled", 1 ) == 1
+	file.cranked_enabled = GetCurrentPlaylistVarInt( "cranked_enabled", 0 ) == 1
 	file.cranked_stim_player_when_cranked = GetCurrentPlaylistVarInt( "cranked_stim_player_when_cranked", 1 ) == 1
 	file.cranked_add_weapon_mods = GetCurrentPlaylistVarInt( "cranked_add_weapon_mods", 1 ) == 1
 	file.cranked_use_explosion_death = GetCurrentPlaylistVarInt( "cranked_use_explosion_death", 1 ) == 1
@@ -119,7 +123,8 @@ void function DoExplode(entity player) {
 			w = weapon
 	if (IsValid(w)) {
 		entity g = w.FireWeaponGrenade( player.GetWorldSpaceCenter(), <0,0,1>, <0,0,0>, 0.00, damageFlags, damageFlags, false, true, true )
-		Grenade_Init(g, w)
+		if (IsValid( player ) && IsValid(g))
+			SetTeam( g, player.GetTeam())
 		g.GrenadeExplode( <0,0,0> )
 	}
 }
