@@ -123,9 +123,10 @@ void function DoExplode(entity player) {
 			w = weapon
 	if (IsValid(w)) {
 		entity g = w.FireWeaponGrenade( player.GetWorldSpaceCenter(), <0,0,1>, <0,0,0>, 0.00, damageFlags, damageFlags, false, true, true )
-		if (IsValid( player ) && IsValid(g))
+		if (IsValid( player ) && IsValid(g)) {
 			SetTeam( g, player.GetTeam())
 		g.GrenadeExplode( <0,0,0> )
+}
 	}
 }
 
